@@ -94,8 +94,8 @@ void main() {
         maxValue: 0,
       );
 
-      // Should return 0 or handle gracefully (NaN)
-      expect(property.percentage.isNaN || property.percentage == 0, true);
+      // When maxValue is 0, percentage returns 0.0
+      expect(property.percentage, 0.0);
     });
 
     test('copyWith should create a new instance with updated values', () {

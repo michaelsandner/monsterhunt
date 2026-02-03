@@ -12,7 +12,12 @@ class MonsterProperty extends Equatable {
   final double currentValue;
   final double maxValue;
 
-  double get percentage => (currentValue / maxValue * 100).clamp(0, 100);
+  double get percentage {
+    if (maxValue == 0) {
+      return 0;
+    }
+    return (currentValue / maxValue * 100).clamp(0, 100);
+  }
 
   bool get isCompleted => currentValue <= 0;
 
