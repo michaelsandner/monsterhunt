@@ -12,6 +12,10 @@ class MonsterInitial extends MonsterState {
   const MonsterInitial();
 }
 
+class MonsterLoading extends MonsterState {
+  const MonsterLoading();
+}
+
 class MonsterLoaded extends MonsterState {
   const MonsterLoaded({required this.monster, this.message});
   final Monster monster;
@@ -39,4 +43,12 @@ class MonsterDefeated extends MonsterState {
 
   @override
   List<Object?> get props => [monster];
+}
+
+class MonsterError extends MonsterState {
+  const MonsterError({required this.message});
+  final String message;
+
+  @override
+  List<Object?> get props => [message];
 }

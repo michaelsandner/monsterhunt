@@ -1,72 +1,157 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
+import 'package:monster/core/error/exceptions.dart';
+import 'package:monster/core/error/failures.dart';
+import 'package:monster/data/datasources/api_service_interface.dart';
+import 'package:monster/data/datasources/local_data_source.dart';
 import 'package:monster/domain/entities/monster.dart';
-import 'package:monster/domain/entities/monster_property.dart';
 import 'package:monster/domain/repositories/monster_repository.dart';
 
 class MonsterRepositoryImpl implements MonsterRepository {
+  MonsterRepositoryImpl(this._apiService, this._localDataSource);
+
+  final ApiServiceInterface _apiService;
+  final LocalDataSource _localDataSource;
+
   @override
   Monster getInitialMonster() => const Monster(
     name: 'Aqua-Drache',
     description:
         'Ein mächtiges Wasser-Monster, das nur durch sportliche Aktivitäten besiegt werden kann!',
     icon: Icons.water_drop,
-    properties: [
-      MonsterProperty(
-        name: 'Schwimmen',
-        unit: 'm',
-        currentValue: 1000,
-        maxValue: 1000,
-      ),
-      MonsterProperty(
-        name: 'Laufen',
-        unit: 'km',
-        currentValue: 50,
-        maxValue: 50,
-      ),
-      MonsterProperty(
-        name: 'Radfahren',
-        unit: 'km',
-        currentValue: 100,
-        maxValue: 100,
-      ),
-      MonsterProperty(
-        name: 'Krafttraining',
-        unit: 'min',
-        currentValue: 300,
-        maxValue: 300,
-      ),
-    ],
+    properties: [],
   );
 
   @override
-  Monster reduceProperty(
+  Future<Either<Failure, Monster>> reduceProperty(
     final Monster monster,
     final String propertyName,
     final double amount,
-  ) {
-    final updatedProperties = monster.properties.map((final property) {
-      if (property.name == propertyName) {
-        final newValue = (property.currentValue - amount).clamp(
-          0.0,
-          property.maxValue,
-        );
-        return property.copyWith(currentValue: newValue);
-      }
-      return property;
-    }).toList();
+  ) async {
+    try {
+      // Try to update via API
+      final updatedProperties = await _apiService.reduceProperty(
+        propertyName: propertyName,
+        amount: amount,
+      );
 
-    return monster.copyWith(properties: updatedProperties);
+      // Cache successful response
+      await _localDataSource.cacheProperties(updatedProperties);
+
+      return Right(monster.copyWith(properties: updatedProperties));
+    } on NetworkException catch (e) {
+      // Network error - try cache first
+      if (_localDataSource.hasCachedData()) {
+        try {
+          final cachedProperties = await _localDataSource.getCachedProperties();
+          return Right(monster.copyWith(properties: cachedProperties));
+        } on CacheException {
+          return const Left(CacheFailure(message: 'Cache data corrupted'));
+        }
+      }
+      return Left(NetworkFailure(message: e.message));
+    } on ServerException catch (e) {
+      // Server error - try cache first
+      if (_localDataSource.hasCachedData()) {
+        try {
+          final cachedProperties = await _localDataSource.getCachedProperties();
+          return Right(monster.copyWith(properties: cachedProperties));
+        } on CacheException {
+          return const Left(CacheFailure(message: 'Cache data corrupted'));
+        }
+      }
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } on DataParsingException catch (e) {
+      return Left(DataParsingFailure(message: e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: 'Unexpected error: $e'));
+    }
   }
 
   @override
-  Monster resetMonster(final Monster monster) {
-    final resetProperties = monster.properties
-        .map(
-          (final property) =>
-              property.copyWith(currentValue: property.maxValue),
-        )
-        .toList();
+  Future<Either<Failure, Monster>> resetMonster(final Monster monster) async {
+    try {
+      // Try to reset via API
+      final resetProperties = await _apiService.resetProperties();
 
-    return monster.copyWith(properties: resetProperties);
+      // Cache successful response
+      await _localDataSource.cacheProperties(resetProperties);
+
+      return Right(monster.copyWith(properties: resetProperties));
+    } on NetworkException catch (e) {
+      // Network error - try cache first
+      if (_localDataSource.hasCachedData()) {
+        try {
+          final cachedProperties = await _localDataSource.getCachedProperties();
+          return Right(monster.copyWith(properties: cachedProperties));
+        } on CacheException {
+          return const Left(CacheFailure(message: 'Cache data corrupted'));
+        }
+      }
+      return Left(NetworkFailure(message: e.message));
+    } on ServerException catch (e) {
+      // Server error - try cache first
+      if (_localDataSource.hasCachedData()) {
+        try {
+          final cachedProperties = await _localDataSource.getCachedProperties();
+          return Right(monster.copyWith(properties: cachedProperties));
+        } on CacheException {
+          return const Left(CacheFailure(message: 'Cache data corrupted'));
+        }
+      }
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } on DataParsingException catch (e) {
+      return Left(DataParsingFailure(message: e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: 'Unexpected error: $e'));
+    }
+  }
+
+  /// Load current properties from API
+  @override
+  Future<Either<Failure, Monster>> loadMonsterWithProperties(
+    final Monster monster,
+  ) async {
+    try {
+      // Try to load from API
+      final properties = await _apiService.getCurrentProperties();
+
+      // Cache successful response
+      await _localDataSource.cacheProperties(properties);
+
+      return Right(monster.copyWith(properties: properties));
+    } on NetworkException catch (e) {
+      // Network error - try cache first
+      if (_localDataSource.hasCachedData()) {
+        try {
+          final cachedProperties = await _localDataSource.getCachedProperties();
+          return Right(monster.copyWith(properties: cachedProperties));
+        } on CacheException {
+          return const Left(CacheFailure(message: 'Cache data corrupted'));
+        }
+      }
+      return Left(NetworkFailure(message: e.message));
+    } on ServerException catch (e) {
+      // Server error - try cache first
+      if (_localDataSource.hasCachedData()) {
+        try {
+          final cachedProperties = await _localDataSource.getCachedProperties();
+          return Right(monster.copyWith(properties: cachedProperties));
+        } on CacheException {
+          return const Left(CacheFailure(message: 'Cache data corrupted'));
+        }
+      }
+      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
+    } on DataParsingException catch (e) {
+      return Left(DataParsingFailure(message: e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: 'Unexpected error: $e'));
+    }
   }
 }

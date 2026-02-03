@@ -32,7 +32,7 @@ class _PropertyInputFormState extends State<PropertyInputForm> {
     super.dispose();
   }
 
-  void _handleSubmit() {
+  Future<void> _handleSubmit() async {
     final input = double.tryParse(_inputController.text);
 
     if (input == null || input <= 0) {
@@ -45,7 +45,7 @@ class _PropertyInputFormState extends State<PropertyInputForm> {
       return;
     }
 
-    context.read<MonsterCubit>().reducePropertyValue(
+    await context.read<MonsterCubit>().reducePropertyValue(
       selectedProperty.name,
       input,
     );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:monster/core/di/dependency_injection.dart';
@@ -21,7 +23,11 @@ class MyApp extends StatelessWidget {
       useMaterial3: true,
     ),
     home: BlocProvider(
-      create: (final context) => getIt<MonsterCubit>()..loadMonster(),
+      create: (final context) {
+        final cubit = getIt<MonsterCubit>();
+        unawaited(cubit.loadMonster());
+        return cubit;
+      },
       child: const MonsterPage(),
     ),
   );

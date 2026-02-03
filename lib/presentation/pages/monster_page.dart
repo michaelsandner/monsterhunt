@@ -33,8 +33,35 @@ class MonsterPage extends StatelessWidget {
       },
       builder: (final context, final state) {
         if (state is MonsterInitial) {
-          context.read<MonsterCubit>().loadMonster();
+          unawaited(context.read<MonsterCubit>().loadMonster());
           return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is MonsterLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is MonsterError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Fehler: ${state.message}',
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () =>
+                      unawaited(context.read<MonsterCubit>().loadMonster()),
+                  child: const Text('Erneut versuchen'),
+                ),
+              ],
+            ),
+          );
         }
 
         final monster = _getMonsterFromState(state);
@@ -91,7 +118,7 @@ class MonsterPage extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                context.read<MonsterCubit>().resetMonsterState();
+                unawaited(context.read<MonsterCubit>().resetMonsterState());
               },
               child: const Text('Neuer Kampf'),
             ),
