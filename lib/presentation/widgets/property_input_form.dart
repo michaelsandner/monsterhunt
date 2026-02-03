@@ -13,13 +13,17 @@ class PropertyInputForm extends StatefulWidget {
 }
 
 class _PropertyInputFormState extends State<PropertyInputForm> {
-  late MonsterProperty selectedProperty;
+  late String selectedPropertyName;
   final TextEditingController _inputController = TextEditingController();
+
+  MonsterProperty get selectedProperty => widget.monster.properties.firstWhere(
+    (final property) => property.name == selectedPropertyName,
+  );
 
   @override
   void initState() {
     super.initState();
-    selectedProperty = widget.monster.properties.first;
+    selectedPropertyName = widget.monster.properties.first.name;
   }
 
   @override
@@ -75,8 +79,8 @@ class _PropertyInputFormState extends State<PropertyInputForm> {
     ),
   );
 
-  Widget _buildDropdown() => DropdownButtonFormField<MonsterProperty>(
-    initialValue: selectedProperty,
+  Widget _buildDropdown() => DropdownButtonFormField<String>(
+    initialValue: selectedPropertyName,
     decoration: const InputDecoration(
       labelText: 'Aktivität auswählen',
       border: OutlineInputBorder(),
@@ -86,7 +90,7 @@ class _PropertyInputFormState extends State<PropertyInputForm> {
     items: widget.monster.properties
         .map(
           (final property) => DropdownMenuItem(
-            value: property,
+            value: property.name,
             child: Text('${property.name} (${property.unit})'),
           ),
         )
@@ -94,7 +98,7 @@ class _PropertyInputFormState extends State<PropertyInputForm> {
     onChanged: (final value) {
       if (value != null) {
         setState(() {
-          selectedProperty = value;
+          selectedPropertyName = value;
         });
       }
     },
