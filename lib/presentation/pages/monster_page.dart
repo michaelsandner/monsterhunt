@@ -20,15 +20,48 @@ class MonsterPage extends StatelessWidget {
     ),
     body: BlocConsumer<MonsterCubit, MonsterState>(
       listener: (final context, final state) {
-        if (state is MonsterPropertyCompleted) {
+        // Show error message as snackbar while keeping monster visible
+        if (state is MonsterLoaded && state.message != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('🎉 ${state.propertyName} abgeschlossen!'),
-              backgroundColor: Colors.green,
+              content: Text(state.message!),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
             ),
           );
+        } else if (state is MonsterPropertyCompleted) {
+          if (state.message != null) {
+            // Show error message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message!),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          } else {
+            // Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('🎉 ${state.propertyName} abgeschlossen!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         } else if (state is MonsterDefeated) {
-          _showVictoryDialog(context, state.monster);
+          if (state.message != null) {
+            // Show error message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message!),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          } else {
+            // Show victory dialog
+            _showVictoryDialog(context, state.monster);
+          }
         }
       },
       builder: (final context, final state) {

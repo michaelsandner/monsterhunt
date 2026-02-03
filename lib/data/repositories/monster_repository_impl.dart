@@ -1,5 +1,4 @@
 import 'package:dartz/dartz.dart';
-import 'package:flutter/material.dart';
 import 'package:monster/core/error/exceptions.dart';
 import 'package:monster/core/error/failures.dart';
 import 'package:monster/data/datasources/api_service_interface.dart';
@@ -13,14 +12,51 @@ class MonsterRepositoryImpl implements MonsterRepository {
   final ApiServiceInterface _apiService;
   final LocalDataSource _localDataSource;
 
+  /// Loads monster from cache if available
+  /// Returns Right with cached monster or Left with CacheFailure
+  Future<Either<Failure, Monster>> _loadFromCache() async {
+    if (_localDataSource.hasCachedData()) {
+      try {
+        final cachedMonster = await _localDataSource.getCachedMonster();
+        return Right(cachedMonster);
+      } on CacheException {
+        return const Left(CacheFailure(message: 'Cache data corrupted'));
+      }
+    }
+    return const Left(CacheFailure(message: 'No cached data available'));
+  }
+
   @override
-  Monster getInitialMonster() => const Monster(
-    name: 'Aqua-Drache',
-    description:
-        'Ein mächtiges Wasser-Monster, das nur durch sportliche Aktivitäten besiegt werden kann!',
-    icon: Icons.water_drop,
-    properties: [],
-  );
+  Future<Either<Failure, Monster>> getInitialMonster() async {
+    try {
+      // Load monster from API
+      final monster = await _apiService.getCurrentMonster();
+
+      // Cache successful response
+      await _localDataSource.cacheMonster(monster);
+
+      return Right(monster);
+    } on NetworkException catch (e) {
+      // Network error - try cache first
+      final cacheResult = await _loadFromCache();
+      return cacheResult.fold(
+        (final failure) => Left(NetworkFailure(message: e.message)),
+        Right.new,
+      );
+    } on ServerException catch (e) {
+      // Server error - try cache
+      final cacheResult = await _loadFromCache();
+      return cacheResult.fold(
+        (final failure) =>
+            Left(ServerFailure(message: e.message, statusCode: e.statusCode)),
+        Right.new,
+      );
+    } on DataParsingException catch (e) {
+      return Left(DataParsingFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: 'Unexpected error: $e'));
+    }
+  }
 
   @override
   Future<Either<Failure, Monster>> reduceProperty(
@@ -35,31 +71,18 @@ class MonsterRepositoryImpl implements MonsterRepository {
         amount: amount,
       );
 
-      // Cache successful response
-      await _localDataSource.cacheProperties(updatedProperties);
+      final updatedMonster = monster.copyWith(properties: updatedProperties);
 
-      return Right(monster.copyWith(properties: updatedProperties));
+      // Cache successful response
+      await _localDataSource.cacheMonster(updatedMonster);
+
+      return Right(updatedMonster);
     } on NetworkException catch (e) {
-      // Network error - try cache first
-      if (_localDataSource.hasCachedData()) {
-        try {
-          final cachedProperties = await _localDataSource.getCachedProperties();
-          return Right(monster.copyWith(properties: cachedProperties));
-        } on CacheException {
-          return const Left(CacheFailure(message: 'Cache data corrupted'));
-        }
-      }
+      // Network error - return error without cache fallback
+      // UI should show error while keeping current state
       return Left(NetworkFailure(message: e.message));
     } on ServerException catch (e) {
-      // Server error - try cache first
-      if (_localDataSource.hasCachedData()) {
-        try {
-          final cachedProperties = await _localDataSource.getCachedProperties();
-          return Right(monster.copyWith(properties: cachedProperties));
-        } on CacheException {
-          return const Left(CacheFailure(message: 'Cache data corrupted'));
-        }
-      }
+      // Server error - return error without cache fallback
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } on DataParsingException catch (e) {
       return Left(DataParsingFailure(message: e.message));
@@ -76,75 +99,18 @@ class MonsterRepositoryImpl implements MonsterRepository {
       // Try to reset via API
       final resetProperties = await _apiService.resetProperties();
 
-      // Cache successful response
-      await _localDataSource.cacheProperties(resetProperties);
-
-      return Right(monster.copyWith(properties: resetProperties));
-    } on NetworkException catch (e) {
-      // Network error - try cache first
-      if (_localDataSource.hasCachedData()) {
-        try {
-          final cachedProperties = await _localDataSource.getCachedProperties();
-          return Right(monster.copyWith(properties: cachedProperties));
-        } on CacheException {
-          return const Left(CacheFailure(message: 'Cache data corrupted'));
-        }
-      }
-      return Left(NetworkFailure(message: e.message));
-    } on ServerException catch (e) {
-      // Server error - try cache first
-      if (_localDataSource.hasCachedData()) {
-        try {
-          final cachedProperties = await _localDataSource.getCachedProperties();
-          return Right(monster.copyWith(properties: cachedProperties));
-        } on CacheException {
-          return const Left(CacheFailure(message: 'Cache data corrupted'));
-        }
-      }
-      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
-    } on DataParsingException catch (e) {
-      return Left(DataParsingFailure(message: e.message));
-    } on CacheException catch (e) {
-      return Left(CacheFailure(message: e.message));
-    } catch (e) {
-      return Left(ServerFailure(message: 'Unexpected error: $e'));
-    }
-  }
-
-  /// Load current properties from API
-  @override
-  Future<Either<Failure, Monster>> loadMonsterWithProperties(
-    final Monster monster,
-  ) async {
-    try {
-      // Try to load from API
-      final properties = await _apiService.getCurrentProperties();
+      final resetMonster = monster.copyWith(properties: resetProperties);
 
       // Cache successful response
-      await _localDataSource.cacheProperties(properties);
+      await _localDataSource.cacheMonster(resetMonster);
 
-      return Right(monster.copyWith(properties: properties));
+      return Right(resetMonster);
     } on NetworkException catch (e) {
-      // Network error - try cache first
-      if (_localDataSource.hasCachedData()) {
-        try {
-          final cachedProperties = await _localDataSource.getCachedProperties();
-          return Right(monster.copyWith(properties: cachedProperties));
-        } on CacheException {
-          return const Left(CacheFailure(message: 'Cache data corrupted'));
-        }
-      }
+      // Network error - return error without cache fallback
+      // UI should show error while keeping current state
       return Left(NetworkFailure(message: e.message));
     } on ServerException catch (e) {
-      // Server error - try cache first
-      if (_localDataSource.hasCachedData()) {
-        try {
-          final cachedProperties = await _localDataSource.getCachedProperties();
-          return Right(monster.copyWith(properties: cachedProperties));
-        } on CacheException {
-          return const Left(CacheFailure(message: 'Cache data corrupted'));
-        }
-      }
+      // Server error - return error without cache fallback
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } on DataParsingException catch (e) {
       return Left(DataParsingFailure(message: e.message));

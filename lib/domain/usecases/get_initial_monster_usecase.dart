@@ -7,9 +7,6 @@ class GetInitialMonsterUseCase {
   GetInitialMonsterUseCase(this.repository);
   final MonsterRepository repository;
 
-  Future<Either<Failure, Monster>> call() async {
-    final monster = repository.getInitialMonster();
-    // Load properties from API
-    return repository.loadMonsterWithProperties(monster);
-  }
+  Future<Either<Failure, Monster>> call() async =>
+      repository.getInitialMonster();
 }

@@ -45,8 +45,32 @@ class MonsterCubit extends Cubit<MonsterState> {
     final result = await reduceProperty(currentMonster, propertyName, amount);
 
     result.fold(
-      (final failure) =>
-          emit(MonsterError(message: _mapFailureToMessage(failure))),
+      (final failure) {
+        // Show error message but keep current monster state
+        // Emit state without message first, then with message to ensure listener triggers
+        final errorMessage = _mapFailureToMessage(failure);
+        if (currentState is MonsterLoaded) {
+          emit(MonsterLoaded(monster: currentMonster));
+          emit(MonsterLoaded(monster: currentMonster, message: errorMessage));
+        } else if (currentState is MonsterPropertyCompleted) {
+          emit(
+            MonsterPropertyCompleted(
+              monster: currentMonster,
+              propertyName: currentState.propertyName,
+            ),
+          );
+          emit(
+            MonsterPropertyCompleted(
+              monster: currentMonster,
+              propertyName: currentState.propertyName,
+              message: errorMessage,
+            ),
+          );
+        } else if (currentState is MonsterDefeated) {
+          emit(MonsterDefeated(monster: currentMonster));
+          emit(MonsterDefeated(monster: currentMonster, message: errorMessage));
+        }
+      },
       (final updatedMonster) {
         // Prüfe ob die Eigenschaft abgeschlossen wurde
         final property = updatedMonster.properties.firstWhere(
@@ -90,8 +114,32 @@ class MonsterCubit extends Cubit<MonsterState> {
 
     final result = await resetMonster(currentMonster);
     result.fold(
-      (final failure) =>
-          emit(MonsterError(message: _mapFailureToMessage(failure))),
+      (final failure) {
+        // Show error message but keep current monster state
+        // Emit state without message first, then with message to ensure listener triggers
+        final errorMessage = _mapFailureToMessage(failure);
+        if (currentState is MonsterLoaded) {
+          emit(MonsterLoaded(monster: currentMonster));
+          emit(MonsterLoaded(monster: currentMonster, message: errorMessage));
+        } else if (currentState is MonsterPropertyCompleted) {
+          emit(
+            MonsterPropertyCompleted(
+              monster: currentMonster,
+              propertyName: currentState.propertyName,
+            ),
+          );
+          emit(
+            MonsterPropertyCompleted(
+              monster: currentMonster,
+              propertyName: currentState.propertyName,
+              message: errorMessage,
+            ),
+          );
+        } else if (currentState is MonsterDefeated) {
+          emit(MonsterDefeated(monster: currentMonster));
+          emit(MonsterDefeated(monster: currentMonster, message: errorMessage));
+        }
+      },
       (final resetMonsterEntity) =>
           emit(MonsterLoaded(monster: resetMonsterEntity)),
     );

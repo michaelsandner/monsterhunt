@@ -29,20 +29,23 @@ class MonsterPropertyCompleted extends MonsterState {
   const MonsterPropertyCompleted({
     required this.monster,
     required this.propertyName,
+    this.message,
   });
   final Monster monster;
   final String propertyName;
+  final String? message;
 
   @override
-  List<Object?> get props => [monster, propertyName];
+  List<Object?> get props => [monster, propertyName, message];
 }
 
 class MonsterDefeated extends MonsterState {
-  const MonsterDefeated({required this.monster});
+  const MonsterDefeated({required this.monster, this.message});
   final Monster monster;
+  final String? message;
 
   @override
-  List<Object?> get props => [monster];
+  List<Object?> get props => [monster, message];
 }
 
 class MonsterError extends MonsterState {

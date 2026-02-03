@@ -1,11 +1,13 @@
+import 'package:monster/domain/entities/monster.dart';
 import 'package:monster/domain/entities/monster_property.dart';
 
 /// Interface für API Services
 /// Ermöglicht einfachen Wechsel zwischen Mock und echtem Backend
 abstract class ApiServiceInterface {
-  /// GET /api/properties
-  /// Returns the current state of all monster properties
-  Future<List<MonsterProperty>> getCurrentProperties();
+  /// GET /api/monster
+  /// Returns the current monster with all its properties
+  /// Used for initial load and fetching current state
+  Future<Monster> getCurrentMonster();
 
   /// POST /api/properties/reduce
   /// Reduces a specific property by the given amount
