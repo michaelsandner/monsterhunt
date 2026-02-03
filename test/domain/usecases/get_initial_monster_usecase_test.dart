@@ -34,79 +34,79 @@ void main() {
   );
 
   group('GetInitialMonsterUseCase', () {
-    test('should get initial monster from repository', () async {
-      // arrange
-      when(
-        () => mockRepository.getInitialMonster(),
-      ).thenAnswer((_) async => const Right(tMonster));
+    group('Given the use case is initialized', () {
+      group('When calling the use case successfully', () {
+        setUp(() {
+          when(
+            () => mockRepository.getInitialMonster(),
+          ).thenAnswer((_) async => const Right(tMonster));
+        });
 
-      // act
-      final result = await useCase();
+        test('Then it should return initial monster from repository', () async {
+          final result = await useCase();
 
-      // assert
-      expect(result, const Right(tMonster));
-      verify(() => mockRepository.getInitialMonster()).called(1);
-      verifyNoMoreInteractions(mockRepository);
-    });
+          expect(result, const Right(tMonster));
+          verify(() => mockRepository.getInitialMonster()).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
+      });
 
-    test(
-      'should return NetworkFailure when repository fails with network error',
-      () async {
-        // arrange
+      group('When repository fails with network error', () {
         const tFailure = NetworkFailure(message: 'No internet connection');
-        when(
-          () => mockRepository.getInitialMonster(),
-        ).thenAnswer((_) async => const Left(tFailure));
 
-        // act
-        final result = await useCase();
+        setUp(() {
+          when(
+            () => mockRepository.getInitialMonster(),
+          ).thenAnswer((_) async => const Left(tFailure));
+        });
 
-        // assert
-        expect(result, const Left(tFailure));
-        verify(() => mockRepository.getInitialMonster()).called(1);
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+        test('Then it should return NetworkFailure', () async {
+          final result = await useCase();
 
-    test(
-      'should return ServerFailure when repository fails with server error',
-      () async {
-        // arrange
+          expect(result, const Left(tFailure));
+          verify(() => mockRepository.getInitialMonster()).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
+      });
+
+      group('When repository fails with server error', () {
         const tFailure = ServerFailure(
           message: 'Server error',
           statusCode: 500,
         );
-        when(
-          () => mockRepository.getInitialMonster(),
-        ).thenAnswer((_) async => const Left(tFailure));
 
-        // act
-        final result = await useCase();
+        setUp(() {
+          when(
+            () => mockRepository.getInitialMonster(),
+          ).thenAnswer((_) async => const Left(tFailure));
+        });
 
-        // assert
-        expect(result, const Left(tFailure));
-        verify(() => mockRepository.getInitialMonster()).called(1);
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+        test('Then it should return ServerFailure', () async {
+          final result = await useCase();
 
-    test(
-      'should return CacheFailure when repository fails with cache error',
-      () async {
-        // arrange
+          expect(result, const Left(tFailure));
+          verify(() => mockRepository.getInitialMonster()).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
+      });
+
+      group('When repository fails with cache error', () {
         const tFailure = CacheFailure(message: 'Cache corrupted');
-        when(
-          () => mockRepository.getInitialMonster(),
-        ).thenAnswer((_) async => const Left(tFailure));
 
-        // act
-        final result = await useCase();
+        setUp(() {
+          when(
+            () => mockRepository.getInitialMonster(),
+          ).thenAnswer((_) async => const Left(tFailure));
+        });
 
-        // assert
-        expect(result, const Left(tFailure));
-        verify(() => mockRepository.getInitialMonster()).called(1);
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+        test('Then it should return CacheFailure', () async {
+          final result = await useCase();
+
+          expect(result, const Left(tFailure));
+          verify(() => mockRepository.getInitialMonster()).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
+      });
+    });
   });
 }

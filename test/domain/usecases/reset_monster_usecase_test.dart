@@ -64,96 +64,83 @@ void main() {
   });
 
   group('ResetMonsterUseCase', () {
-    test('should reset monster through repository', () async {
-      // arrange
-      when(
-        () => mockRepository.resetMonster(any()),
-      ).thenAnswer((_) async => const Right(tResetMonster));
-
-      // act
-      final result = await useCase(tMonster);
-
-      // assert
-      expect(result, const Right(tResetMonster));
-      verify(() => mockRepository.resetMonster(tMonster)).called(1);
-      verifyNoMoreInteractions(mockRepository);
-    });
-
-    test(
-      'should return monster with all properties reset to max value',
-      () async {
-        // arrange
-        when(
-          () => mockRepository.resetMonster(any()),
-        ).thenAnswer((_) async => const Right(tResetMonster));
-
-        // act
-        final result = await useCase(tMonster);
-
-        // assert
-        result.fold((final failure) => fail('Expected Right but got Left'), (
-          final monster,
-        ) {
-          for (final property in monster.properties) {
-            expect(
-              property.currentValue,
-              property.maxValue,
-              reason: '${property.name} should be reset to max value',
-            );
-          }
+    group('Given a monster with partially completed properties', () {
+      group('When resetting the monster successfully', () {
+        setUp(() {
+          when(
+            () => mockRepository.resetMonster(any()),
+          ).thenAnswer((_) async => const Right(tResetMonster));
         });
-      },
-    );
 
-    test('should return NetworkFailure when repository fails', () async {
-      // arrange
-      const tFailure = NetworkFailure(message: 'No internet connection');
-      when(
-        () => mockRepository.resetMonster(any()),
-      ).thenAnswer((_) async => const Left(tFailure));
+        test('Then it should return reset monster from repository', () async {
+          final result = await useCase(tMonster);
 
-      // act
-      final result = await useCase(tMonster);
+          expect(result, const Right(tResetMonster));
+          verify(() => mockRepository.resetMonster(tMonster)).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
 
-      // assert
-      expect(result, const Left(tFailure));
-      verify(() => mockRepository.resetMonster(tMonster)).called(1);
-      verifyNoMoreInteractions(mockRepository);
-    });
+        test('Then all properties should be reset to max value', () async {
+          final result = await useCase(tMonster);
 
-    test(
-      'should return ServerFailure when repository fails with server error',
-      () async {
-        // arrange
+          result.fold((final failure) => fail('Expected Right but got Left'), (
+            final monster,
+          ) {
+            for (final property in monster.properties) {
+              expect(
+                property.currentValue,
+                property.maxValue,
+                reason: '${property.name} should be reset to max value',
+              );
+            }
+          });
+        });
+
+        test('Then it should pass correct monster to repository', () async {
+          await useCase(tMonster);
+
+          verify(() => mockRepository.resetMonster(tMonster)).called(1);
+        });
+      });
+
+      group('When repository fails with network error', () {
+        const tFailure = NetworkFailure(message: 'No internet connection');
+
+        setUp(() {
+          when(
+            () => mockRepository.resetMonster(any()),
+          ).thenAnswer((_) async => const Left(tFailure));
+        });
+
+        test('Then it should return NetworkFailure', () async {
+          final result = await useCase(tMonster);
+
+          expect(result, const Left(tFailure));
+          verify(() => mockRepository.resetMonster(tMonster)).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
+      });
+
+      group('When repository fails with server error', () {
         const tFailure = ServerFailure(
           message: 'Server error',
           statusCode: 500,
         );
-        when(
-          () => mockRepository.resetMonster(any()),
-        ).thenAnswer((_) async => const Left(tFailure));
 
-        // act
-        final result = await useCase(tMonster);
+        setUp(() {
+          when(
+            () => mockRepository.resetMonster(any()),
+          ).thenAnswer((_) async => const Left(tFailure));
+        });
 
-        // assert
-        expect(result, const Left(tFailure));
-        verify(() => mockRepository.resetMonster(tMonster)).called(1);
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+        test('Then it should return ServerFailure', () async {
+          final result = await useCase(tMonster);
 
-    test('should pass correct monster to repository', () async {
-      // arrange
-      when(
-        () => mockRepository.resetMonster(any()),
-      ).thenAnswer((_) async => const Right(tResetMonster));
-
-      // act
-      await useCase(tMonster);
-
-      // assert
-      verify(() => mockRepository.resetMonster(tMonster)).called(1);
+          expect(result, const Left(tFailure));
+          verify(() => mockRepository.resetMonster(tMonster)).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
+      });
     });
   });
 }

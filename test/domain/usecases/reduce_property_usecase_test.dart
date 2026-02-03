@@ -67,99 +67,93 @@ void main() {
   });
 
   group('ReducePropertyUseCase', () {
-    test('should reduce property value through repository', () async {
-      // arrange
-      when(
-        () => mockRepository.reduceProperty(any(), any(), any()),
-      ).thenAnswer((_) async => const Right(tUpdatedMonster));
+    group('Given a monster with properties', () {
+      group('When reducing a property value successfully', () {
+        setUp(() {
+          when(
+            () => mockRepository.reduceProperty(any(), any(), any()),
+          ).thenAnswer((_) async => const Right(tUpdatedMonster));
+        });
 
-      // act
-      final result = await useCase(tMonster, tPropertyName, tAmount);
+        test('Then it should return updated monster from repository', () async {
+          final result = await useCase(tMonster, tPropertyName, tAmount);
 
-      // assert
-      expect(result, const Right(tUpdatedMonster));
-      verify(
-        () => mockRepository.reduceProperty(tMonster, tPropertyName, tAmount),
-      ).called(1);
-      verifyNoMoreInteractions(mockRepository);
-    });
+          expect(result, const Right(tUpdatedMonster));
+          verify(
+            () =>
+                mockRepository.reduceProperty(tMonster, tPropertyName, tAmount),
+          ).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
 
-    test('should return updated monster with reduced property value', () async {
-      // arrange
-      when(
-        () => mockRepository.reduceProperty(any(), any(), any()),
-      ).thenAnswer((_) async => const Right(tUpdatedMonster));
+        test('Then the property should have reduced value', () async {
+          final result = await useCase(tMonster, tPropertyName, tAmount);
 
-      // act
-      final result = await useCase(tMonster, tPropertyName, tAmount);
+          result.fold((final failure) => fail('Expected Right but got Left'), (
+            final monster,
+          ) {
+            final updatedProperty = monster.properties.firstWhere(
+              (final p) => p.name == tPropertyName,
+            );
+            expect(updatedProperty.currentValue, 45.0);
+            expect(updatedProperty.maxValue, 50.0);
+          });
+        });
 
-      // assert
-      result.fold((final failure) => fail('Expected Right but got Left'), (
-        final monster,
-      ) {
-        final updatedProperty = monster.properties.firstWhere(
-          (final p) => p.name == tPropertyName,
-        );
-        expect(updatedProperty.currentValue, 45.0);
-        expect(updatedProperty.maxValue, 50.0);
+        test('Then it should pass correct parameters to repository', () async {
+          await useCase(tMonster, tPropertyName, tAmount);
+
+          verify(
+            () =>
+                mockRepository.reduceProperty(tMonster, tPropertyName, tAmount),
+          ).called(1);
+        });
       });
-    });
 
-    test('should return NetworkFailure when repository fails', () async {
-      // arrange
-      const tFailure = NetworkFailure(message: 'No internet connection');
-      when(
-        () => mockRepository.reduceProperty(any(), any(), any()),
-      ).thenAnswer((_) async => const Left(tFailure));
+      group('When repository fails with network error', () {
+        const tFailure = NetworkFailure(message: 'No internet connection');
 
-      // act
-      final result = await useCase(tMonster, tPropertyName, tAmount);
+        setUp(() {
+          when(
+            () => mockRepository.reduceProperty(any(), any(), any()),
+          ).thenAnswer((_) async => const Left(tFailure));
+        });
 
-      // assert
-      expect(result, const Left(tFailure));
-      verify(
-        () => mockRepository.reduceProperty(tMonster, tPropertyName, tAmount),
-      ).called(1);
-      verifyNoMoreInteractions(mockRepository);
-    });
+        test('Then it should return NetworkFailure', () async {
+          final result = await useCase(tMonster, tPropertyName, tAmount);
 
-    test(
-      'should return ServerFailure when repository fails with server error',
-      () async {
-        // arrange
+          expect(result, const Left(tFailure));
+          verify(
+            () =>
+                mockRepository.reduceProperty(tMonster, tPropertyName, tAmount),
+          ).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
+      });
+
+      group('When repository fails with server error', () {
         const tFailure = ServerFailure(
           message: 'Server error',
           statusCode: 500,
         );
-        when(
-          () => mockRepository.reduceProperty(any(), any(), any()),
-        ).thenAnswer((_) async => const Left(tFailure));
 
-        // act
-        final result = await useCase(tMonster, tPropertyName, tAmount);
+        setUp(() {
+          when(
+            () => mockRepository.reduceProperty(any(), any(), any()),
+          ).thenAnswer((_) async => const Left(tFailure));
+        });
 
-        // assert
-        expect(result, const Left(tFailure));
-        verify(
-          () => mockRepository.reduceProperty(tMonster, tPropertyName, tAmount),
-        ).called(1);
-        verifyNoMoreInteractions(mockRepository);
-      },
-    );
+        test('Then it should return ServerFailure', () async {
+          final result = await useCase(tMonster, tPropertyName, tAmount);
 
-    test('should pass correct parameters to repository', () async {
-      // arrange
-      when(
-        () => mockRepository.reduceProperty(any(), any(), any()),
-      ).thenAnswer((_) async => const Right(tUpdatedMonster));
-
-      // act
-      await useCase(tMonster, tPropertyName, tAmount);
-
-      // assert
-      verify(
-        () => mockRepository.reduceProperty(tMonster, tPropertyName, tAmount),
-      ).called(1);
+          expect(result, const Left(tFailure));
+          verify(
+            () =>
+                mockRepository.reduceProperty(tMonster, tPropertyName, tAmount),
+          ).called(1);
+          verifyNoMoreInteractions(mockRepository);
+        });
+      });
     });
   });
 }
