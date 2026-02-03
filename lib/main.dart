@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:monster/core/di/dependency_injection.dart';
+import 'package:monster/presentation/cubit/monster_cubit.dart';
 import 'package:monster/presentation/pages/monster_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await setupDependencyInjection();
   runApp(const MyApp());
 }
 
@@ -18,8 +21,7 @@ class MyApp extends StatelessWidget {
       useMaterial3: true,
     ),
     home: BlocProvider(
-      create: (final context) =>
-          DependencyInjection.createMonsterCubit()..loadMonster(),
+      create: (final context) => getIt<MonsterCubit>()..loadMonster(),
       child: const MonsterPage(),
     ),
   );
