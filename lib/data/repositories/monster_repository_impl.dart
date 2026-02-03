@@ -23,7 +23,7 @@ class MonsterRepositoryImpl implements MonsterRepository {
         return const Left(CacheFailure(message: 'Cache data corrupted'));
       }
     }
-    return const Left(CacheFailure(message: 'No cached data available'));
+    return const Left(CacheFailure());
   }
 
   @override

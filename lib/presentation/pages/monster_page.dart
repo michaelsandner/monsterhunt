@@ -26,7 +26,6 @@ class MonsterPage extends StatelessWidget {
             SnackBar(
               content: Text(state.message!),
               backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
             ),
           );
         } else if (state is MonsterPropertyCompleted) {
@@ -36,7 +35,6 @@ class MonsterPage extends StatelessWidget {
               SnackBar(
                 content: Text(state.message!),
                 backgroundColor: Colors.red,
-                duration: const Duration(seconds: 4),
               ),
             );
           } else {
@@ -55,7 +53,6 @@ class MonsterPage extends StatelessWidget {
               SnackBar(
                 content: Text(state.message!),
                 backgroundColor: Colors.red,
-                duration: const Duration(seconds: 4),
               ),
             );
           } else {

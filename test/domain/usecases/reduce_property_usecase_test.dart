@@ -1,12 +1,12 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:monster/core/error/failures.dart';
 import 'package:monster/domain/entities/monster.dart';
 import 'package:monster/domain/entities/monster_property.dart';
 import 'package:monster/domain/repositories/monster_repository.dart';
 import 'package:monster/domain/usecases/reduce_property_usecase.dart';
-import 'package:mocktail/mocktail.dart';
 
 class MockMonsterRepository extends Mock implements MonsterRepository {}
 
@@ -94,9 +94,11 @@ void main() {
       final result = await useCase(tMonster, tPropertyName, tAmount);
 
       // assert
-      result.fold((failure) => fail('Expected Right but got Left'), (monster) {
+      result.fold((final failure) => fail('Expected Right but got Left'), (
+        final monster,
+      ) {
         final updatedProperty = monster.properties.firstWhere(
-          (p) => p.name == tPropertyName,
+          (final p) => p.name == tPropertyName,
         );
         expect(updatedProperty.currentValue, 45.0);
         expect(updatedProperty.maxValue, 50.0);

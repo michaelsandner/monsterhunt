@@ -7,7 +7,7 @@ void main() {
       name: 'Laufen',
       unit: 'km',
       currentValue: 25.5,
-      maxValue: 50.0,
+      maxValue: 50,
     );
 
     test('should be a valid MonsterProperty entity', () {
@@ -100,7 +100,7 @@ void main() {
 
     test('copyWith should create a new instance with updated values', () {
       final updatedProperty = tProperty.copyWith(
-        currentValue: 10.0,
+        currentValue: 10,
         name: 'Schwimmen',
       );
 
