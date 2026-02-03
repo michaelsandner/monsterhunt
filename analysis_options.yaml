@@ -127,7 +127,6 @@ linter:
     use_late_for_private_fields_and_variables: true
     use_named_constants: true
     use_raw_strings: true
-    use_setters_to_change_state: true
     use_string_buffers: true
     use_string_in_part_of_directives: true
     use_super_parameters: true
